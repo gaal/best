@@ -1,0 +1,17 @@
+Revision history for Best
+
+0.05    2006-06-28
+        Add C<which> method to query which alternative succeeded.
+
+0.04    2006-06-27
+        Doc fix.
+
+0.03    2006-06-27
+        Doc fix.
+
+0.02    2006-06-27
+        Don't shove debugging routines to main::
+
+0.01    2006-06-25
+        First version, released on an unsuspecting world.
+

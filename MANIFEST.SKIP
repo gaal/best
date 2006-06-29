@@ -1,0 +1,8 @@
+\.vim$
+\.cvsignore
+\.swp$
+^_build
+^blib
+^Build$
+Best-.*\.tar\.gz
+\.bak$
