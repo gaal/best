@@ -3,7 +3,7 @@ package Best;
 use warnings;
 use strict;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 our %WHICH;
 
@@ -68,7 +68,7 @@ sub import {
                                                   # valid only if $has_args
     my $no_import = ($has_args && !@args) || @args == 1 && @{ $args[0] } == 0; # use Mod ()
 
-    do { require Carp; Carp::carp "Best: what modules shall I load?" }
+    do { require Carp; Carp::carp("Best: what modules shall I load?") }
         unless $modules;
 
 #::YY({mod=>$modules,has=>$has_args, arg=>\@args, noimport=>$no_import});
