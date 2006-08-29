@@ -3,7 +3,7 @@ package Best;
 use warnings;
 use strict;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 our %WHICH;
 
@@ -105,8 +105,8 @@ sub import {
 
 =item which
 
-In some cases--for example, class methods in OO modules--you want to
-know which module B<Best> has successfully loaded. Call C<<Best->which>>
+In some cases--for example, class methods in OO modules--you want to know
+which module B<Best> has successfully loaded. Call C<< Best->which >>
 with the I<first> in your list of module alternatives; the return value
 is a string containing the name of the loaded module.
 

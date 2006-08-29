@@ -1,5 +1,8 @@
 Revision history for Best
 
+0.07    2006-08-29
+        POD fix.
+
 0.06    2006-06-30
         Use parens around args to carp, which was broken in bleadperl.
         Thanks to Martin 'Kingpin' Thurn for the report. Closes
