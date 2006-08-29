@@ -163,7 +163,7 @@ You can find documentation for this module with the perldoc command.
 
     perldoc Best
 
-You can also look for information at:
+You can also contact the maintainer at the address above or look for information at:
 
 =over 4
 
