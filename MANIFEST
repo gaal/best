@@ -1,5 +1,11 @@
 Build.PL
+Tests.PL
 Changes
+Makefile.PL
+MANIFEST			This list of files
+MANIFEST.SKIP
+META.yml
+README
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
@@ -13,14 +19,12 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/Best.pm
-Makefile.PL
-MANIFEST			This list of files
-MANIFEST.SKIP
-META.yml
-README
+t/lib/Load/Trace.pm
 t/A/Module.pm
 t/AnAlternative.pm
 t/boilerplate.t
 t/LastChance.pm
 t/pod.t
-t/lib/Load/Trace.pm
+t/Loads/Ok.pm
+t/Version/Ok.pm
+t/Version/TooLow.pm

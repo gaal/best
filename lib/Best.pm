@@ -1,5 +1,7 @@
 package Best;
 
+use 5.006;
+
 use warnings;
 use strict;
 
@@ -233,9 +235,12 @@ fallback list includes XS modules, though, you may need to stick with us.)
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Gaal Yahas, C<< <gaal at forum2.org> >>
+
+Joshua ben Jore, C<< <jjore at cpan.org> >> has made some significant
+contributions.
 
 =head1 BUGS
 
@@ -257,11 +262,11 @@ You can also contact the maintainer at the address above or look for information
 
 =item * AnnoCPAN: Annotated CPAN documentation
 
-L<http://annocpan.org/dist/Best>
+L<http://annocpan.org/dist/Best/>
 
 =item * CPAN Ratings
 
-L<http://cpanratings.perl.org/d/Best>
+L<http://cpanratings.perl.org/d/Best/>
 
 =item * RT: CPAN's request tracker
 
@@ -269,21 +274,40 @@ L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Best>
 
 =item * Search CPAN
 
-L<http://search.cpan.org/dist/Best>
+L<http://search.cpan.org/dist/Best/>
+
+=item * Source repository
+
+L<http://svn.openfoundry.org/perlbest/>
 
 =back
 
-=head1 COPYRIGHT & LICENSE
+=head1 COPYRIGHT (The "MIT" License)
 
-Copyright 2006 Gaal Yahas, all rights reserved.
+Copyright 2006 Gaal Yahas.
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
 
 =cut
 
 # These are my favorite debugging tools. Share and enjoy.
-sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
-sub ::YY { require Carp; Carp::confess(::Y(@_)) }
+#sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
+#sub ::YY { require Carp; Carp::confess(::Y(@_)) }
 
 "You'll never see me"; # End of Best
