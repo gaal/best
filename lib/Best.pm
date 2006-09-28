@@ -3,6 +3,7 @@ package Best;
 use warnings;
 use strict;
 
+# $Id$
 our $VERSION = '0.07';
 
 our %WHICH;
