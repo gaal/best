@@ -116,11 +116,22 @@ with a C<version> key.
 
 =head2 PRE-VALIDATION
 
-Document C<{ if => CODEREF }>
+  use Best Module => { if => CODEREF };
+
+You may prevent B<Best> from attempting to load a module by providing
+a function as a parameter to C<if>. The module will only be loaded if
+your function returns a true value.
 
 =head2 POST-VALIDATION
 
-Document C<{ check => CODEREF }>
+  use Best Module => { ok => CODEREF };
+
+You may prevent B<Best> from settling on a successfully loaded module
+by providing a function as a parameter to C<ok>. B<Best> will follow
+all of it's normal rules to attempt to load your module but can be
+told to continue retrying if your function returns false or throws an
+exception.
+
 
 =head2 ARBITRARY CODE
 
