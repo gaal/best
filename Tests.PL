@@ -1,0 +1,218 @@
+#!perl -T
+use strict;
+use warnings FATAL => 'all';
+
+my $TEST_NUMBER = 0;
+
+write_test( file => 'basic', tests => 4, best => <<'BEST', code => <<'CODE' );
+use Best [ qw/A::Module AnAlternative LastChance/ ];
+BEST
+is "@attempted", 'A::Module AnAlternative LastChance', 'tried all modules';
+is "@loaded",    'LastChance', 'loaded correct one - trace evidence';
+is (Best->which('A::Module'), 'LastChance', 'loaded correct one - which()');
+
+{
+    package Someother;
+    Test::More::is (Best->which('A::Module'), 'LastChance', 'loaded correct one - which() from other module'); 
+}
+CODE
+
+write_test(
+    file  => 'basic-a',
+    tests => 2,
+    best  => <<'BEST', code => <<'CODE' );
+use Best qw/A::Module AnAlternative LastChance/;
+BEST
+CODE
+
+write_test(
+    file  => 'best',
+    tests => 3,
+    best  => <<'BEST', code => <<'CODE' );
+use Best [ [qw/A::Module AnAlternative LastChance/], qw/moose elk/ ];
+BEST
+is "@attempted", 'A::Module AnAlternative LastChance';
+is "@loaded",    'LastChance';
+is "@args",      'LastChance moose elk';
+CODE
+
+write_test(
+    file  => 'args-a',
+    tests => 3,
+    best  => <<'BEST', code => <<'CODE' );
+use Best [ [qw/A::Module AnAlternative LastChance/], [qw/moose elk/] ];
+BEST
+is "@attempted", 'A::Module AnAlternative LastChance';
+is "@loaded",    'LastChance';
+is "@args",      'LastChance moose elk';
+CODE
+
+write_test(
+    file  => 'noargs',
+    tests => 3,
+    best  => <<'BEST', code => <<'CODE' );
+use Best [ [qw/A::Module AnAlternative LastChance/], [] ];
+BEST
+is "@attempted", 'A::Module AnAlternative';
+is "@loaded",    ''; # AnAlternative's import was not called
+ok !defined @args;
+CODE
+
+write_test( file => 'ver', tests => 3, best => <<'BEST', code => <<'CODE' );
+use Best [ [qw/Version::TooLow 1.00 LastChance/], qw/moose elk/ ];
+BEST
+is "@attempted", 'Version::TooLow Version::Ok';
+is "@loaded",    'Version::Ok';
+is "@args",      'Version::Ok moose elk';
+CODE
+
+write_test(
+    file  => 'exist-a',
+    tests => 3,
+    best  => <<'BEST', code => <<'CODE' );
+use Best [ [qw/Doesn't::Exist LastChance/], qw/moose elk/ ];
+BEST
+TODO: {
+    local $TODO = q[Don't know how to instrument failed module load];
+    is "@attempted", q[Doesn't::Exist LastChance];
+}
+is "@loaded", 'LastChance';
+is "@args",   'LastChance moose elk';
+CODE
+
+write_test( file => 'exist', tests => 3, best => <<'BEST', code => <<'CODE' );
+use Best qw/Doesn't::Exist LastChance/;
+BEST
+TODO: {
+    local $TODO = q[Don't know how to instrument failed module load];
+    is "@attempted", q[Doesn't::Exist LastChance];
+}
+is "@loaded", 'LastChance';
+is "@args",   'LastChance';
+CODE
+
+write_test( file => 'code', tests => 3, best => <<'BEST', code => <<'CODE' );
+use Best [ [sub {
+                push @attempted, 'Failed-CODE';
+                return;
+            },
+            qw/LastChance/], qw/moose elk/ ];
+BEST
+is "@attempted", 'Failed-CODE LastChance';
+is "@loaded",    'LastChance';
+is "@args",      'LastChance moose elk';
+CODE
+
+write_test( file => 'hash', tests => 3, best => <<'BEST', code => <<'CODE' );
+use Best [ [ 'A::Module' => {},
+             AnAlternative => {},
+             LastChance => {}, ],
+           [], ];
+BEST
+is "@attempted", 'A::Module AnAlternative LastChance';
+is "@loaded",    'LastChance';
+is "@args",      'LastChance'
+CODE
+
+write_test(
+    file  => 'ver-h',
+    tests => 3,
+    best  => <<'BEST', code => <<'CODE' );
+use Best [ [ 'Version::TooLow' => { version => '1.00', },
+             'Version::Ok'     => { version => '1.00', }, ],
+           [qw/moose elk/], ];
+BEST
+is "@attempted", 'Version::TooLow Version::Ok';
+is "@loaded",    'Version::Ok';
+is "@args",      'Version::Ok moose elk';
+CODE
+
+write_test(
+    file  => 'ok-h',
+    tests => 3,
+    best  => <<'BEST', code => <<'CODE' );
+use Best [ [ 'Loads::Ok' => { ok => sub {
+                                        ok Loads::Ok->loaded_ok;
+                                        return 0;
+                                    }, },
+             'LastChance', ],
+           [qw/moose elk/], ];
+BEST
+is "@attempted", 'Loads::Ok LastChance';
+is "@loaded_ok", 'LastChance';
+is "@args",      'LastChance moose elk';
+CODE
+
+write_test( file => 'if-h', tests => 2, best => <<'BEST', code => <<'CODE' );
+use Best [ [ 'A::Module' => { if => sub { 0 }, },
+             qw/AnAlternative LastChance/ ], ];
+BEST
+is "@attempted", 'AnAlternative LastChance';
+is "@loaded",    'LastChance';
+CODE
+
+write_test(
+    file  => 'args-h',
+    tests => 3,
+    best  => <<'BEST', code => <<'CODE' );
+use Best [ [ qw/A::Module AnAlternative/,
+             LastChance => { args => [qw/moose elk/] } ],
+           qw/Unused arguments/];
+BEST
+is "@attempted", 'A::Module AnAlternative LastChance';
+is "@loaded",    'LastChance';
+is "@args",      'LastChance moose elk';
+CODE
+
+use constant TEMPLATE => <<'TEMPLATE';
+#!perl -T
+## DO NOT EDIT THIS FILE. It is generated by t/Tests.PL
+use strict;
+use warnings;
+use vars qw/@attempted @loaded @args/;
+
+use Test::More tests => 1 + TESTS;
+use lib 't';
+
+BEST
+
+pass q[Best didn't crash];
+
+CODE
+
+TEMPLATE
+
+sub write_test {
+    my %p = @_;
+    my ( $tests, $best, $code, $file ) = map {
+        if ( not exists $p{$_} )
+        {
+            require Carp;
+            Carp::croak("Missing parameter: $_");
+        }
+        elsif ( not defined $p{$_} ) {
+            require Carp;
+            Carp::croak("Undefined parameter: $_");
+        }
+        delete $p{$_}
+    } qw(tests best code file);
+    die "Unknown parameters: @{[sort keys %p]}"
+        if keys %p;
+
+    my $src = TEMPLATE;
+
+    $src =~ s/TESTS/$tests/ or die;
+    $src =~ s/BEST/$best/   or die;
+    $src =~ s/CODE/$code/   or die;
+
+    $file = sprintf 't/%02d-%s.t', ++$TEST_NUMBER, $file;
+
+    print "Writing test $file\n";
+    open my $fh, '>', $file
+        or die "Can't open $file: $!";
+    print {$fh} $src
+        or die "Can't write to $file: $!";
+    close $fh
+        or die "Can't flush $file: $!";
+    return;
+}
