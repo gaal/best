@@ -21,6 +21,27 @@ Best - Fallbackable module loader
     # Load a YAML module and import some symbols
     use Best [ [ qw/YAML::Syck YAML/ ], qw/DumpFile LoadFile/ ];
 
+    # Load a new enough YAML module
+    use Best qw/YAML 0.58 YAML::Syck/;
+    use Best [ qw/YAML 0.58 YAML::Syck/ ];
+    use Best [ [ YAML => { version => '0.58' },
+                 'YAML::Syck' ] ];
+
+    # Don't load too-new YAML module and import DumpFile
+    use Best [ [ YAML => { ok => sub { YAML->VERSION <= 0.23 } },
+                 'YAML::Syck', ],
+               qw/DumpFile/ ];
+
+    # Use the best Carp module w/ different parameter lists
+    use Best [ [ 'Carp::Clan' => { args => [] },
+                 'Carp' ],
+               qw/croak confess carp cluck/ ];
+
+    # Choose alternate implementations
+    use Best [ [ 'My::Memoize' => { if => sub { $] <= 5.006 } },
+                 'Memoize' ],
+               qw/memoize/ ];
+
     # Load a CGI module but import nothing
     use Best [ [ qw/CGI::Simple CGI/ ], [] ];
 
@@ -44,15 +65,82 @@ the elements are taken to be module names and are loaded in order with
 their default import function called. Any exported symbols are installed
 in the caller package.
 
+
+  use Best qw/A Simple List/;
+  use Best [ qw/A Simple List/ ];
+
+=head2 IMPORT LISTS
+
 If the arguments are a listref with a listref as its first element,
 this interior list is treated as the specification of modules to attempt
 loading, in order; the rest of the arguments are treated as options to
 pass on to the loaded module's import function.
 
+  use Best [ [ qw/A Simple List/ ],
+             qw/Argument list goes here/ ];
+  use Best [ [ qw/A Simple List/ ],
+             [ qw/Argument list goes here/ ] ];
+
 To specify a null import (C<use Some::Module ()>), pass a zero-element
 listref as the argument list. In the pathological case where you really
 want to load a module and pass it C<[]> as an argument, specify C<[
 [] ]> as the argument list to B<Best>.
+
+  # use Module ();
+  use Best [ [ 'Module' ], [] ];
+
+  # use Module ( [] );
+  use Best [ [ 'Module' ], [[]] ];
+
+To customize the import list for a module, use the C<args> parameter
+in a hash reference following the module's name.
+
+  # use Carp::Clan;
+  # use Carp qw/carp croak confess cluck/;
+  use Best [ [ 'Carp::Clan' => { args => [] },
+               'Carp' ],
+             qw/carp croak confess cluck/ ];
+
+=head2 MINIMUM VERSIONS
+
+You can specify a minimum version for a module by following the module
+name with something that looks like a number or by a hash reference
+with a C<version> key.
+
+  use Best [ [ YAML => '0.58',
+               'YAML::Syck' ] ];
+
+  use Best [ [ YAML => { version => '0.58' },
+               'YAML::Syck' ] ];
+
+=head2 PRE-VALIDATION
+
+Document C<{ if => CODEREF }>
+
+=head2 POST-VALIDATION
+
+Document C<{ check => CODEREF }>
+
+=head2 ARBITRARY CODE
+
+A code reference may be substituted for module names. It will be
+called instead of attempting to load a module. You may do anything you
+wish in this code. It will be skipped if your code throws an exception
+or returns false.
+
+  use Best [ sub {
+                 # Decline
+                 return;
+             },
+             sub {
+                 # Oops!
+                 die 'Some error';
+             },
+             'Bad::Module',
+             sub {
+                 # Ok!
+                 return 1;
+             }, ];
 
 =cut
 
