@@ -18,14 +18,9 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 META.yml
 README
-t/00-load.t
-t/01-basic-a.t
-t/01-basic.t
-t/02-args-a.t
-t/02-args.t
-t/03-noargs.t
 t/A/Module.pm
 t/AnAlternative.pm
 t/boilerplate.t
 t/LastChance.pm
 t/pod.t
+t/lib/Load/Trace.pm

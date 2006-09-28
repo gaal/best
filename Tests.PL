@@ -72,10 +72,7 @@ write_test(
     best  => <<'BEST', code => <<'CODE' );
 use Best [ [qw/Doesn't::Exist LastChance/], qw/moose elk/ ];
 BEST
-TODO: {
-    local $TODO = q[Don't know how to instrument failed module load];
-    is "@attempted", q[Doesn't::Exist LastChance];
-}
+is "@attempted", q[Doesn::t::Exist LastChance];
 is "@loaded", 'LastChance';
 is "@args",   'LastChance moose elk';
 CODE
@@ -83,10 +80,7 @@ CODE
 write_test( file => 'exist', tests => 3, best => <<'BEST', code => <<'CODE' );
 use Best qw/Doesn't::Exist LastChance/;
 BEST
-TODO: {
-    local $TODO = q[Don't know how to instrument failed module load];
-    is "@attempted", q[Doesn't::Exist LastChance];
-}
+is "@attempted", q[Doesn::t::Exist LastChance];
 is "@loaded", 'LastChance';
 is "@args",   'LastChance';
 CODE
@@ -172,7 +166,10 @@ use warnings;
 use vars qw/@attempted @loaded @args/;
 
 use Test::More tests => 1 + TESTS;
-use lib 't';
+use lib qw(t t/lib);
+use Load::Trace
+        { port   => \@attempted,
+          filter => [qw/Best overload/] }; # Test::Builder uses overloading
 
 BEST
 
@@ -182,6 +179,9 @@ CODE
 
 TEMPLATE
 
+{
+my $num;
+BEGIN { $num = 10 }
 sub write_test {
     my %p = @_;
     my ( $tests, $best, $code, $file ) = map {
@@ -205,7 +205,7 @@ sub write_test {
     $src =~ s/BEST/$best/   or die;
     $src =~ s/CODE/$code/   or die;
 
-    $file = sprintf 't/50-%s.t', $file;
+    $file = sprintf 't/%02d-%s.t', $num++, $file;
 
     print "Writing test $file\n";
     open my $fh, '>', $file
@@ -215,4 +215,5 @@ sub write_test {
     close $fh
         or die "Can't flush $file: $!";
     return;
+}
 }
