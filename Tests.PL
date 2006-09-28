@@ -2,10 +2,8 @@
 use strict;
 use warnings FATAL => 'all';
 
-my $TEST_NUMBER = 0;
-
 write_test( file => 'basic', tests => 4, best => <<'BEST', code => <<'CODE' );
-use Best [ qw/A::Module AnAlternative LastChance/ ];
+use Best qw/A::Module AnAlternative LastChance/;
 BEST
 is "@attempted", 'A::Module AnAlternative LastChance', 'tried all modules';
 is "@loaded",    'LastChance', 'loaded correct one - trace evidence';
@@ -21,8 +19,10 @@ write_test(
     file  => 'basic-a',
     tests => 2,
     best  => <<'BEST', code => <<'CODE' );
-use Best qw/A::Module AnAlternative LastChance/;
+use Best [ qw/A::Module AnAlternative LastChance/ ];
 BEST
+is "@attempted", 'A::Module AnAlternative LastChance', 'tried all modules';
+is "@loaded",    'LastChance', 'loaded correct one - trace evidence';
 CODE
 
 write_test(
@@ -59,7 +59,7 @@ ok !defined @args;
 CODE
 
 write_test( file => 'ver', tests => 3, best => <<'BEST', code => <<'CODE' );
-use Best [ [qw/Version::TooLow 1.00 LastChance/], qw/moose elk/ ];
+use Best [ [qw/Version::TooLow 2.00 Version::Ok 1.00/], qw/moose elk/ ];
 BEST
 is "@attempted", 'Version::TooLow Version::Ok';
 is "@loaded",    'Version::Ok';
@@ -93,12 +93,12 @@ CODE
 
 write_test( file => 'code', tests => 3, best => <<'BEST', code => <<'CODE' );
 use Best [ [sub {
-                push @attempted, 'Failed-CODE';
+                push @attempted, 'Failed code';
                 return;
             },
             qw/LastChance/], qw/moose elk/ ];
 BEST
-is "@attempted", 'Failed-CODE LastChance';
+is "@attempted", 'Failed code LastChance';
 is "@loaded",    'LastChance';
 is "@args",      'LastChance moose elk';
 CODE
@@ -118,8 +118,8 @@ write_test(
     file  => 'ver-h',
     tests => 3,
     best  => <<'BEST', code => <<'CODE' );
-use Best [ [ 'Version::TooLow' => { version => '1.00', },
-             'Version::Ok'     => { version => '1.00', }, ],
+use Best [ [ 'Version::TooLow' => { version => '2.00', },
+             'Version::Ok'     => { version => '2.00', }, ],
            [qw/moose elk/], ];
 BEST
 is "@attempted", 'Version::TooLow Version::Ok';
@@ -139,7 +139,7 @@ use Best [ [ 'Loads::Ok' => { ok => sub {
            [qw/moose elk/], ];
 BEST
 is "@attempted", 'Loads::Ok LastChance';
-is "@loaded_ok", 'LastChance';
+is "@loaded", 'LastChance';
 is "@args",      'LastChance moose elk';
 CODE
 
@@ -205,7 +205,7 @@ sub write_test {
     $src =~ s/BEST/$best/   or die;
     $src =~ s/CODE/$code/   or die;
 
-    $file = sprintf 't/%02d-%s.t', ++$TEST_NUMBER, $file;
+    $file = sprintf 't/50-%s.t', $file;
 
     print "Writing test $file\n";
     open my $fh, '>', $file

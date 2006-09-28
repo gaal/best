@@ -1,4 +1,5 @@
 package Version::TooLow;
-$VERSION = 0.5;
+
+$VERSION = '1.00';
 
 1;
