@@ -1,7 +1,10 @@
 use inc::Module::Install;
 
-name            'Best';
-all_from        'lib/Best.pm';
+# Generate our tests prior to WriteAll.
+system $^X, '-T', 'Tests.PL';
+
+name 'Best';
+all_from 'lib/Best.pm';
 
 perl_version '5.006';
 license 'bsd';
