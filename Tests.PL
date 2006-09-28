@@ -192,7 +192,7 @@ TEMPLATE
 
 {
     my $num;
-    BEGIN { $num = 10 }
+    BEGIN { $num = 50 }
 
     sub write_test {
         my %p = @_;
