@@ -7,12 +7,12 @@ package Load::Trace;
 use strict;
 
 sub import {
-    ( undef, my $spec ) = @_;
+    (undef, my $spec) = @_;
     die "Load::Trace requires an output port" unless $spec->{port};
     my %filter = map { $_ => 1 } @{ $spec->{filter} || [] };
     use Carp;
     unshift @INC, sub {
-        ( undef, my $file ) = @_;
+        (undef, my $file) = @_;
         normalize($file);
 
         push @{ $spec->{port} }, $file
