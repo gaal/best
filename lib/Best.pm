@@ -9,6 +9,9 @@ our $VERSION = '0.09';
 
 our %WHICH;
 
+use constant TRACE => ! ! $ENV{TRACE_BEST};
+use constant DEBUG => ! ! ( $ENV{DEBUG_BEST} || $ENV{TRACE_BEST} );
+
 =head1 NAME
 
 Best - Fallbackable module loader
@@ -129,9 +132,7 @@ your function returns a true value.
 You may prevent B<Best> from settling on a successfully loaded module
 by providing a function as a parameter to C<ok>. B<Best> will follow
 all of it's normal rules to attempt to load your module but can be
-told to continue retrying if your function returns false or throws an
-exception.
-
+told to continue retrying if your function returns false.
 
 =head2 ARBITRARY CODE
 
@@ -157,14 +158,16 @@ or returns false.
 =cut
 
 # See if dereferencing it throws an error. This is meant to allow
-# overloaded things to pretend to be arrays. It also allows blessed
-# arrays to pass.
+# overloaded things to pretend to be array/hashes/coderefs. It also
+# allows blessed array/hashes/coderefs to pass.
 use overload ();
 
 sub does_arrayref {
     my($thing) = @_;
     return if not defined $thing;
     
+    # This does not share the void context hash dereferencing bug but
+    # I'm being consistent about the style of returning a value.
     no warnings;
     return eval { return 1 + @{ $thing } };
 }
@@ -173,8 +176,18 @@ sub does_hashref {
     my($thing) = @_;
     return if not defined $thing;
     
+    # There is a bug in 5.8 where void context %{...} doesn't
+    # evaluate. This was originally coded to check $@ but given the
+    # bug, it's not reliable. The fix is to use the value of the
+    # dereference.
     no warnings;
     return eval { return 1 + %{ $thing } };
+}
+
+sub does_coderef {
+    my($thing) = @_;
+    return overload::Method($thing, '&{}') ||
+        overload::StrVal($thing) =~ /CODE\(0x[\da-f]+\)\z/;
 }
 
 sub looks_like_version {
@@ -184,19 +197,16 @@ sub looks_like_version {
         $version =~ /\Av?\d+(?:\.[\d_]+)?\z/;
 }
 
-sub does_coderef {
-    my($thing) = @_;
-    return overload::Method($thing, '&{}') ||
-        overload::StrVal($thing) =~ /CODE\(0x[\da-f]+\)\z/;
-}
-
 sub assert {
+    # We'll pretend to be Carp::Assert here.
     return 1 if shift @_;
 
     require Carp;
     Carp::confess(@_ ? @_ : q[Something's wrong!]);
 }
+
 sub diag {
+    # This output is safe to inline for Test::Harness.
     my($msg) = join '', @_;
     my ($package, $file, $line) = caller;
     $msg =~ s/^/# /gm;
@@ -206,8 +216,10 @@ sub diag {
 }
 
 # !! is more idiomatic, but messes up vim's hilighter :(
-use constant DEBUG => ! ! $ENV{TEST_BEST};
-BEGIN { eval 'use Data::Dumper' if DEBUG }
+BEGIN {
+    TRACE and do { require Data::Dumper;
+		   Data::Dumper->import( 'Dumper' ) };
+}
 
 sub import {
     my $caller = caller;
@@ -217,27 +229,25 @@ sub import {
     # Unflatten the module list.
     #
     # @_ = [ module arrayref, args arrayref ];
-    DEBUG and diag(Dumper( @_ ));
+    TRACE and diag(Dumper( @_ ));
     if (not does_arrayref($_[0])) {
         # use Best  qw/a b/;
-        DEBUG and diag('Totally flattened module list');
+        TRACE and diag('Totally flattened module list');
         @_ = [[@_]];
     }
     elsif (not does_arrayref($_[0][0])) {
         # use Best [qw/a b/];
-        DEBUG and diag('Semi-flattened module list');
+        TRACE and diag('Semi-flattened module list');
         @_ = [@_];
     }
     else {
-        DEBUG and diag('Unflattened module list');
+        TRACE and diag('Unflattened module list');
     }
     
     # Unflattened the import list.
     #
-    DEBUG and do {
-        assert(@{$_[0]} > 0);
-        diag(Dumper(@{$_[0]}));
-    };
+    TRACE and diag(Dumper(@{$_[0]}));
+    DEBUG and assert(@{$_[0]} > 0);
     if (@{$_[0]} == 1) {
         # [ module-arrayref, undef ]
         $_[0][1] = undef;
@@ -250,12 +260,11 @@ sub import {
         $_[0][1] = [ splice @{$_[0]}, 1 ];
     }
     
-    DEBUG and do {
-        assert(does_arrayref($_[0]));
-        diag(Dumper(@_));
-    };
+    TRACE and diag(Dumper(@_));
+    DEBUG and assert(does_arrayref($_[0]));
     my @params = @{ shift @_ };
     DEBUG and assert(0 == @_);
+
     
     # Promote sugared and param-less modules to have specs:
     #      Module|Code
@@ -285,17 +294,21 @@ sub import {
         $modules[$i] = [ $module, $param ];
     }
 
+    do { require Carp; Carp::croak('What modules shall I load?') }
+        unless @modules;
+
+
+    # Unpack the import arguments.
     my ($has_args, @args, $no_import);
-    DEBUG and do { diag(Dumper(@params));
-           assert(1 == @params);
-           assert(!defined $params[0]
+    TRACE and  diag(Dumper(@params));
+    DEBUG and do {
+	assert(1 == @params);
+	assert(!defined $params[0]
                or does_arrayref($params[0]));
     };
     if (not does_arrayref($params[0])) {
-        DEBUG and do {
-            assert(!defined, $params[0]);
-            diag('no import')
-        };
+	TRACE and diag( 'no import' );
+        DEBUG and assert(!defined, $params[0]);
         shift @params;
     }
     else {
@@ -304,9 +317,6 @@ sub import {
         # valid only if $has_args
         $no_import = ($has_args && !@args) || @args == 1 && @{ $args[0] } == 0; # use Mod ()
     }
-
-    do { require Carp; Carp::carp("Best: what modules shall I load?") }
-        unless @modules;
 
     #::YY({mod=>$modules,has=>$has_args, arg=>\@args, noimport=>$no_import});
 
@@ -322,10 +332,7 @@ sub import {
     for my $thing_to_try (@modules) {
         my ($mod, $spec) = @$thing_to_try;
         if (my $precondition = $spec->{if}) {
-            my $retval = eval { $precondition->() };
-            # I'm not convinced exceptions here shouldn't be fatal. But
-            # certainly they should at least be traceable.
-            DEBUG and $@ and diag("Precondition for $mod died: $@");
+            my $retval = $precondition->();
             next MODULE unless $retval;
         }
         my $version = defined $spec->{version} ? $spec->{version} : '';
@@ -334,11 +341,12 @@ sub import {
                            $has_args     ? '@args'            :
                                            '';
 
-        DEBUG and diag("Trying $mod");
+	# Load the module/code
+        TRACE and diag("Trying $mod");
         my $retval;
         if (does_coderef($mod)) {
+	    $retval = $mod->();
             eval {
-                $retval = $mod->();
                 die "$mod returned false" if not $retval;
             };
         }
@@ -347,7 +355,7 @@ sub import {
                     package $caller;
                     use $mod $version $loadargs;
                 };
-            DEBUG and diag($src);
+            TRACE and diag($src);
             $retval = eval $src;
         }
 
@@ -356,15 +364,16 @@ sub import {
             next MODULE;
         }
         elsif ( my $postcondition = $spec->{ok} ) {
-            next MODULE unless eval { $postcondition->() };
+            next MODULE unless $postcondition->();
         }
         
-        DEBUG and diag( "Loaded $mod\n" );
+        TRACE and diag( "Loaded $mod\n" );
         $WHICH{$caller}{$first_module} =
             $WHICH{__latest}{$first_module} = $mod;
         return $retval;
     }
-    die "no viable module found: @errors";
+    require Carp;
+    Carp::croak('No viable module found: ' . map { "$_\n" } @errors );
 }
 
 =over 4
@@ -417,6 +426,31 @@ Gaal Yahas, C<< <gaal at forum2.org> >>
 
 Joshua ben Jore, C<< <jjore at cpan.org> >> has made some significant
 contributions.
+
+=head1 DIAGNOSTICS
+
+=over
+
+=item What modules shall I load?
+
+C<Best> wasn't given a list of modules to load.
+
+=item No viable module found: %s
+
+None of the module alternatives loaded.
+
+=item Something's wrong!
+
+An assertion failed. This means that either there is a bug in the data
+you fed to B<Best> or a bug in B<Best>.
+
+=back
+
+The code is scattered with assertions and debugging output that can be
+enabled by putting a true value in the environment variables
+C<TRACE_BEST> and C<DEBUG_BEST>.
+
+Enabling C<TRACE_BEST> also enables the debugging code.
 
 =head1 BUGS
 
