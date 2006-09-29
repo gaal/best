@@ -159,6 +159,8 @@ or returns false.
 # See if dereferencing it throws an error. This is meant to allow
 # overloaded things to pretend to be arrays. It also allows blessed
 # arrays to pass.
+use overload ();
+
 sub does_arrayref {
     my $thing = shift @_;
     return if not defined $thing;
@@ -180,6 +182,12 @@ sub looks_like_version {
     
     return( defined $version
 	    and $version =~ /\Av?\d+(?:\.[\d_]+)?\z/ );
+}
+
+sub does_coderef {
+    my $thing = shift @_;
+    return( overload::Method( $thing, '&{}' )
+	    or overload::StrVal( $thing ) =~ /CODE\(0x[\da-f]+\)\z/ );
 }
 
 sub assert {
@@ -309,25 +317,28 @@ sub import {
 	if ( my $precondition = $spec->{if} ) {
 	    next MODULE unless eval { $precondition->() };
 	}
-
-	my $postcondition = $spec->{ok};
 	my $version = defined $spec->{version} ? $spec->{version} : '';
 	my $loadargs = $no_import    ? '()'               :
                        $spec->{args} ? '@{$spec->{args}}' :
                        $has_args     ? '@args'            :
                                        '';
-	if ( ref $mod ) {
-	    require Carp;
-	    Carp::croak( "$mod loading isn't implemented" );
-	}
-	
+
 	DEBUG and diag( "Trying $mod" );
-        my $src = qq{
-            package $caller;
-            use $mod $version $loadargs;
-        };
-	my $retval = eval $src;
-	DEBUG and diag( $src );
+	my $retval;
+	if ( does_coderef( $mod ) ) {
+	    eval {
+		$retval = $mod->();
+		die "$mod returned false" if not $retval;
+	    };
+	}
+	else {
+	    my $src = qq{
+                package $caller;
+                use $mod $version $loadargs;
+            };
+	    DEBUG and diag( $src );
+	    $retval = eval $src;
+	}
 
         if ($@) {
             push @errors, $@;
