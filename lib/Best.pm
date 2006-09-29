@@ -364,8 +364,7 @@ sub import {
             $WHICH{__latest}{$first_module} = $mod;
         return $retval;
     }
-    die "no viable module found: $@";
-    die @errors;
+    die "no viable module found: @errors";
 }
 
 =over 4
