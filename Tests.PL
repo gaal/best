@@ -90,7 +90,7 @@ use Best [ [sub {
                 push @attempted, 'Failed code';
                 return;
             },
-            qw/LastChance/], qw/moose elk/ ];
+            'LastChance'], qw/moose elk/ ];
 BEST
 is "@attempted", 'Failed code LastChance';
 is "@loaded",    'LastChance';
@@ -182,7 +182,7 @@ CODE
 
 write_test(
     file  => 'code-h',
-    tests => 1,
+    tests => 2,
     best  => <<'BEST', code => <<'CODE' );
 use Best [ [ sub { push @attempted, 'ignored' } => { if => sub { 0 } },
              sub { push @attempted, 'ok'; push @loaded, 'ok' } => { ok => sub { 1 } } ] ];
@@ -205,6 +205,11 @@ use lib qw(t t/lib);
 use Carp ();
 use Best ();
 use overload ();
+BEGIN {
+    overload::Overloaded( sub {} );
+    overload::Method( sub{}, '&{}' );
+    overload::StrVal( sub{} );
+}
 
 use Load::Trace
         { port   => \@attempted,
