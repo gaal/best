@@ -156,21 +156,142 @@ or returns false.
 
 =cut
 
+# See if dereferencing it throws an error. This is meant to allow
+# overloaded things to pretend to be arrays. It also allows blessed
+# arrays to pass.
+sub does_arrayref {
+    my $thing = shift @_;
+    return if not defined $thing;
+    
+    no warnings;
+    return eval { return 1 + @{ $thing } };
+}
+
+sub does_hashref {
+    my $thing = shift @_;
+    return if not defined $thing;
+    
+    no warnings;
+    return eval { return 1 + %{ $thing } };
+}
+
+sub looks_like_version {
+    my $version = shift @_;
+    
+    return( defined $version
+	    and $version =~ /\Av?\d+(?:\.[\d_]+)?\z/ );
+}
+
+sub assert {
+    return 1 if shift @_;
+
+    require Carp;
+    Carp::confess( @_ ? @_ : q[Something's wrong!] );
+}
+sub diag {
+    local $_ = join '', @_;
+    my ( $package, $file, $line ) = caller;
+    s/^/# /gm;
+    s/(?<!\n)\z/\n/;
+    print "# $file on line $line\n$_";
+    return 1;
+}
+
+use constant DEBUG => !! $ENV{TEST_BEST};
+BEGIN { eval 'use Data::Dumper' if DEBUG }
+
 sub import {
     my $caller = caller;
-    shift; # "Best"
+    shift @_; # "Best"
     return unless @_;
 
-    @_            = [[@_]] unless ref $_[0];      # use Best  qw/a b/;
-    @_            = [@_]   unless ref $_[0][0];   # use Best [qw/a b/];
-    my $modules   = shift @{ $_[0] };
-    my $has_args  = @{ $_[0] } > 0;
-    my @args      = ref $_[0][0] ? @{ $_[0][0] } : @{ $_[0] };
-                                                  # valid only if $has_args
-    my $no_import = ($has_args && !@args) || @args == 1 && @{ $args[0] } == 0; # use Mod ()
+    # Unflatten the module list.
+    #
+    # @_ = [ module arrayref, args arrayref ];
+    DEBUG and diag( Dumper( @_ ) );
+    if ( not does_arrayref( $_[0] ) ) {
+	# use Best  qw/a b/;
+	DEBUG and diag( 'Totally flattened module list' );
+	@_ = [[@_]];
+    }
+    elsif ( not does_arrayref( $_[0][0] ) ) {
+	# use Best [qw/a b/];
+	DEBUG and diag( 'Semi-flattened module list' );
+	@_ = [@_];
+    }
+    else {
+	DEBUG and diag( 'Unflattened module list' );
+    }
+    
+    # Unflattened the import list.
+    #
+    DEBUG and do { assert( @{$_[0]} > 0 );
+		   diag( Dumper( @{$_[0]} ) ) };
+    if ( @{$_[0]} == 1 ) {
+	# [ module-arrayref, undef ]
+	$_[0][1] = undef;
+    }
+    elsif ( @{$_[0]} == 2
+	    and does_arrayref( $_[0][1] ) ) {
+	# [ module-arrayref, args-arrayref ]
+    }
+    else {
+	# [ module-arrayref, LIST ] -> [ module-arrayref, args-arrayref ]
+	$_[0][1] = [ splice @{$_[0]}, 1 ];
+    }
+    
+    DEBUG and do { assert( does_arrayref( $_[0] ) );
+		   diag( Dumper( @_ ) ) };
+    my @params = @{ shift @_ };
+    DEBUG and assert( 0 == @_ );
+    
+    # Promote sugared and param-less modules to have specs:
+    #      Module|Code
+    #   or Module|Code => VERSION
+    #   or Module|Code => HASHREF
+    #
+    #   becomes:
+    #   [ Module|Code => HASHREF ]
+    DEBUG and assert( does_arrayref( $params[0] ) );
+    my @modules   = @{ shift @params };
+    DEBUG and assert( 1 == @params );
+    for ( my $i = 0; $i <= $#modules; ++ $i ) {
+	my ( $module, $param ) = @modules[ $i, 1+$i ];
+	
+	if ( looks_like_version( $param ) ) {
+	    $param = { version => $param };
+	    splice @modules, 1+$i, 1;
+	}
+	elsif ( does_hashref( $param ) ) {
+	    splice @modules, 1+$i, 1;
+	}
+	else {
+	    $param = {};
+	}
+
+	DEBUG and assert( does_hashref( $param ) );
+	$modules[$i] = [ $module, $param ];
+    }
+
+    my ( $has_args, @args, $no_import );
+    DEBUG and do { diag( Dumper( @params ) );
+		   assert( 1 == @params );
+		   assert( !defined $params[0]
+			   or does_arrayref( $params[0] ) ) };
+    if ( not does_arrayref( $params[0] ) ) {
+	DEBUG and do { assert( !defined, $params[0] );
+		       diag( 'no import' ) };
+	shift @params;
+    }
+    else {
+	$has_args  = 1;
+	@args      = @{ shift @params };
+	# valid only if $has_args
+	$no_import = ($has_args && !@args) || @args == 1 && @{ $args[0] } == 0; # use Mod ()
+    }
 
     do { require Carp; Carp::carp("Best: what modules shall I load?") }
-        unless $modules;
+        unless @modules;
 
 #::YY({mod=>$modules,has=>$has_args, arg=>\@args, noimport=>$no_import});
 
@@ -180,23 +301,46 @@ sub import {
     # better, because the callee may be picky about its caller. We are in
     # compile time, and we do need to trust our caller anyway, so what the
     # hell, let's eval away.
-    
     my @errors;
-    for my $mod (@$modules) {
-        my $loadargs = $no_import ? '()' :
-                ($has_args ? '@args' : '');
-        my $retval = eval qq{
+    my $first_module = $modules[0][0];
+  MODULE:
+    for my $thing_to_try (@modules) {
+	my ( $mod, $spec ) = @$thing_to_try;
+	if ( my $precondition = $spec->{if} ) {
+	    next MODULE unless eval { $precondition->() };
+	}
+
+	my $postcondition = $spec->{ok};
+	my $version = defined $spec->{version} ? $spec->{version} : '';
+	my $loadargs = $no_import    ? '()'               :
+                       $spec->{args} ? '@{$spec->{args}}' :
+                       $has_args     ? '@args'            :
+                                       '';
+	if ( ref $mod ) {
+	    require Carp;
+	    Carp::croak( "$mod loading isn't implemented" );
+	}
+	
+	DEBUG and diag( "Trying $mod" );
+        my $src = qq{
             package $caller;
-            use $mod $loadargs;
+            use $mod $version $loadargs;
         };
+	my $retval = eval $src;
+	DEBUG and diag( $src );
 
         if ($@) {
             push @errors, $@;
-        } else {
-            $WHICH{$caller}{$modules->[0]} =
-                $WHICH{__latest}{$modules->[0]} = $mod;
-            return $retval;
+	    next MODULE;
         }
+	elsif ( my $postcondition = $spec->{ok} ) {
+	    next MODULE unless eval { $postcondition->() };
+	}
+	
+	DEBUG and diag( "Loaded $mod\n" );
+	$WHICH{$caller}{$first_module} =
+	  $WHICH{__latest}{$first_module} = $mod;
+	return $retval;
     }
     die "no viable module found: $@";
     die @errors;
