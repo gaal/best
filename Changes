@@ -1,5 +1,8 @@
 Revision history for Best
 
+0.09    2006-09-30
+        Doc fixes and cleanups.
+
 0.08    2006-09-30
         Added features:
           Arbitrary code substitutable for modules
