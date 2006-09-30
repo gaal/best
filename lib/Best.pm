@@ -5,12 +5,13 @@ use 5.006;
 use warnings;
 use strict;
 
-our $VERSION = '0.09';
+our $VERSION = '0.08';
 
 our %WHICH;
 
+# !! is more idiomatic, but messes up vim's hilighter :(
 use constant TRACE => ! ! $ENV{TRACE_BEST};
-use constant DEBUG => ! ! ( $ENV{DEBUG_BEST} || $ENV{TRACE_BEST} );
+use constant DEBUG => ! ! ($ENV{DEBUG_BEST} || $ENV{TRACE_BEST});
 
 =head1 NAME
 
@@ -166,8 +167,9 @@ sub does_arrayref {
     my($thing) = @_;
     return if not defined $thing;
     
-    # This does not share the void context hash dereferencing bug but
-    # I'm being consistent about the style of returning a value.
+    # This does not share the void context hash dereferencing bug
+    # (see C<does_hashref>) but I'm being consistent about the
+    # style of returning a value.
     no warnings;
     return eval { return 1 + @{ $thing } };
 }
@@ -215,10 +217,11 @@ sub diag {
     return 1;
 }
 
-# !! is more idiomatic, but messes up vim's hilighter :(
 BEGIN {
-    TRACE and do { require Data::Dumper;
-		   Data::Dumper->import( 'Dumper' ) };
+    TRACE and do {
+        require Data::Dumper;
+        Data::Dumper->import('Dumper');
+    };
 }
 
 sub import {
@@ -229,7 +232,7 @@ sub import {
     # Unflatten the module list.
     #
     # @_ = [ module arrayref, args arrayref ];
-    TRACE and diag(Dumper( @_ ));
+    TRACE and diag(Dumper(@_));
     if (not does_arrayref($_[0])) {
         # use Best  qw/a b/;
         TRACE and diag('Totally flattened module list');
@@ -274,7 +277,7 @@ sub import {
     #   becomes:
     #   [ Module|Code => HASHREF ]
     DEBUG and assert(does_arrayref($params[0]));
-    my @modules   = @{ shift @params };
+    my @modules = @{ shift @params };
     DEBUG and assert(1 == @params);
     for (my $i = 0; $i <= $#modules; ++$i) {
         my ($module, $param) = @modules[ $i, 1+$i ];
@@ -300,14 +303,14 @@ sub import {
 
     # Unpack the import arguments.
     my ($has_args, @args, $no_import);
-    TRACE and  diag(Dumper(@params));
+    TRACE and diag(Dumper(@params));
     DEBUG and do {
-	assert(1 == @params);
-	assert(!defined $params[0]
-               or does_arrayref($params[0]));
+        assert(1 == @params);
+        assert(!defined $params[0] ||
+                   does_arrayref($params[0]));
     };
     if (not does_arrayref($params[0])) {
-	TRACE and diag( 'no import' );
+    TRACE and diag( 'no import' );
         DEBUG and assert(!defined, $params[0]);
         shift @params;
     }
@@ -332,8 +335,7 @@ sub import {
     for my $thing_to_try (@modules) {
         my ($mod, $spec) = @$thing_to_try;
         if (my $precondition = $spec->{if}) {
-            my $retval = $precondition->();
-            next MODULE unless $retval;
+            next MODULE unless $precondition->();
         }
         my $version = defined $spec->{version} ? $spec->{version} : '';
         my $loadargs = $no_import        ? '()'               :
@@ -341,14 +343,12 @@ sub import {
                            $has_args     ? '@args'            :
                                            '';
 
-	# Load the module/code
+    # Load the module/code
         TRACE and diag("Trying $mod");
         my $retval;
         if (does_coderef($mod)) {
-	    $retval = $mod->();
-            eval {
-                die "$mod returned false" if not $retval;
-            };
+            $retval = $mod->();
+            eval { die "$mod returned false" if not $retval };
         }
         else {
             my $src = qq{
@@ -363,7 +363,7 @@ sub import {
             push @errors, $@;
             next MODULE;
         }
-        elsif ( my $postcondition = $spec->{ok} ) {
+        elsif (my $postcondition = $spec->{ok}) {
             next MODULE unless $postcondition->();
         }
         
@@ -373,7 +373,7 @@ sub import {
         return $retval;
     }
     require Carp;
-    Carp::croak('No viable module found: ' . map { "$_\n" } @errors );
+    Carp::croak('No viable module found: ' . map { "$_\n" } @errors);
 }
 
 =over 4
