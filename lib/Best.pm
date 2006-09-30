@@ -26,14 +26,16 @@ Best - Fallbackable module loader
     # Load a YAML module and import some symbols
     use Best [ [ qw/YAML::Syck YAML/ ], qw/DumpFile LoadFile/ ];
 
+    # And fancier stuff...
+
     # Load a new enough YAML module
     use Best qw/YAML 0.58 YAML::Syck/;
     use Best [ qw/YAML 0.58 YAML::Syck/ ];
-    use Best [ [ YAML => { version => '0.58' },
+    use Best [ [ 'YAML' => { version => '0.58' },
                  'YAML::Syck' ] ];
 
     # Don't load too-new YAML module and import DumpFile
-    use Best [ [ YAML => { ok => sub { YAML->VERSION <= 0.23 } },
+    use Best [ [ 'YAML' => { ok => sub { YAML->VERSION <= 0.23 } },
                  'YAML::Syck', ],
                qw/DumpFile/ ];
 
@@ -48,7 +50,7 @@ Best - Fallbackable module loader
                qw/memoize/ ];
 
     # Load a CGI module but import nothing
-    use Best [ [ qw/CGI::Simple CGI/ ], [] ];
+    use Best [ [ qw/CGI::Simple CGI/ ], [] ];      # akin to 'use CGI ()'
 
 =head1 DESCRIPTION
 
@@ -407,6 +409,9 @@ One solution is to use L<Inline::Module> to inline C<Best.pm> in your
 source code. If you don't know this module, check it out -- after you
 learn what it does, you may decide you don't need B<Best> at all! (If your
 fallback list includes XS modules, though, you may need to stick with us.)
+
+C<Best.pm> is pure Perl and a single module with a convenient license, so
+you can also just drop it in your project's C<lib> directory.
 
 =head1 SEE ALSO
 
