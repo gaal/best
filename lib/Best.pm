@@ -132,8 +132,8 @@ your function returns a true value.
 
 You may prevent B<Best> from settling on a successfully loaded module
 by providing a function as a parameter to C<ok>. B<Best> will follow
-all of it's normal rules to attempt to load your module but can be
-told to continue retrying if your function returns false.
+all of its normal rules to attempt to load your module but can be told
+to continue retrying if your function returns false.
 
 =head2 ARBITRARY CODE
 
