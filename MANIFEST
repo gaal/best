@@ -27,6 +27,7 @@ t/LastChance.pm
 t/lib/Load/Trace.pm
 t/Loads/Ok.pm
 t/pod.t
+t/pod-coverage.t
 t/Version/Ok.pm
 t/Version/TooLow.pm
 Tests.PL
