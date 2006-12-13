@@ -5,13 +5,14 @@ use 5.006;
 use warnings;
 use strict;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 our %WHICH;
 
 # !! is more idiomatic, but messes up vim's hilighter :(
 use constant TRACE => ! ! $ENV{TRACE_BEST};
 use constant DEBUG => ! ! ($ENV{DEBUG_BEST} || $ENV{TRACE_BEST});
+
 
 =head1 NAME
 
@@ -206,7 +207,7 @@ sub assert {
     return 1 if shift @_;
 
     require Carp;
-    Carp::confess(@_ ? @_ : q[Something's wrong!]);
+    Carp::confess(@_ ? @_ : "Something's wrong!");
 }
 
 sub diag {
@@ -249,7 +250,7 @@ sub import {
         TRACE and diag('Unflattened module list');
     }
     
-    # Unflattened the import list.
+    # Unflatten the import list.
     #
     TRACE and diag(Dumper(@{$_[0]}));
     DEBUG and assert(@{$_[0]} > 0);
@@ -312,7 +313,7 @@ sub import {
                    does_arrayref($params[0]));
     };
     if (not does_arrayref($params[0])) {
-    TRACE and diag( 'no import' );
+        TRACE and diag('no import');
         DEBUG and assert(!defined, $params[0]);
         shift @params;
     }
@@ -320,7 +321,9 @@ sub import {
         $has_args  = 1;
         @args      = @{ shift @params };
         # valid only if $has_args
-        $no_import = ($has_args && !@args) || @args == 1 && @{ $args[0] } == 0; # use Mod ()
+        DEBUG and diag("has_args => $has_args, \@args => [@args]");
+        $no_import = !@args ||
+                @args == 1 && does_arrayref($args[0]) && @{ $args[0] } == 0; # use Mod ()
     }
 
     #::YY({mod=>$modules,has=>$has_args, arg=>\@args, noimport=>$no_import});
@@ -522,7 +525,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 =cut
 
 # These are my favorite debugging tools. Share and enjoy.
-#sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
-#sub ::YY { require Carp; Carp::confess(::Y(@_)) }
+sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
+sub ::YY { require Carp; Carp::confess(::Y(@_)) }
 
 "You'll never see me"; # End of Best

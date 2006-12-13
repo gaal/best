@@ -1,5 +1,9 @@
 Revision history for Best
 
+0.11    2006-12-14
+        Fixed single method imports. Thanks to Tatsuhiko Miyagawa for
+        the report.
+
 0.10    2006-09-30
         Doc fixes and cleanups.
 

@@ -37,6 +37,19 @@ is "@args",      'LastChance moose elk', '->import';
 CODE
 
 write_test(
+    file  => 'onearg',
+    tests => 3,
+    best  => <<'BEST', code => <<'CODE' );
+# miyagawa++ noticed a crash when there was exactly one element on the
+# import list. Oops!
+use Best [ [qw/A::Module AnAlternative LastChance/], qw/moose/ ];
+BEST
+is "@attempted", 'A::Module AnAlternative LastChance', 'tried all modules';
+is "@loaded",    'LastChance', 'loaded correct one';
+is "@args",      'LastChance moose', '->import';
+CODE
+
+write_test(
     file  => 'args-a',
     tests => 3,
     best  => <<'BEST', code => <<'CODE' );
