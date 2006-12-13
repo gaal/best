@@ -13,7 +13,6 @@ our %WHICH;
 use constant TRACE => ! ! $ENV{TRACE_BEST};
 use constant DEBUG => ! ! ($ENV{DEBUG_BEST} || $ENV{TRACE_BEST});
 
-
 =head1 NAME
 
 Best - Fallbackable module loader
