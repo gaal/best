@@ -218,6 +218,7 @@ use lib qw(t t/lib);
 use Carp ();
 use Best ();
 use overload ();
+BEGIN { eval { require mro } }  # fixes failure on bleadperl as of 2009-01-17
 BEGIN {
     overload::Overloaded( sub {} );
     overload::Method( sub{}, '&{}' );
