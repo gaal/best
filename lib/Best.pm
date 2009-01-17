@@ -5,7 +5,7 @@ use 5.006;
 use warnings;
 use strict;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 our %WHICH;
 
@@ -524,7 +524,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 =cut
 
 # These are my favorite debugging tools. Share and enjoy.
-sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
-sub ::YY { require Carp; Carp::confess(::Y(@_)) }
+#sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
+#sub ::YY { require Carp; Carp::confess(::Y(@_)) }
 
 "You'll never see me"; # End of Best
