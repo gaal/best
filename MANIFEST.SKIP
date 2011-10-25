@@ -3,6 +3,7 @@
 ~$
 MANIFEST.mine
 MANIFEST.old
+Makefile.old
 MANIFEST.r
 [5-9]\d-.*\.t
 ^Makefile$
