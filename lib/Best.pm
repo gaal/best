@@ -495,7 +495,7 @@ L<http://search.cpan.org/dist/Best/>
 
 =item * Source repository
 
-L<http://svn.openfoundry.org/perlbest/>
+L<https://github.com/gaal/best>
 
 =back
 
