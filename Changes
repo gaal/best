@@ -1,5 +1,11 @@
 Revision history for Best
 
+0.13    2011-10-25
+        Misc distro cleanups.
+          Clarify license is MIT
+          Update Module::Install
+          Document new home for source
+
 0.12    2009-01-18
         Preload mro in tests, unbreaking them in bleadperl (thanks,
         nothingmuch for the fix).
