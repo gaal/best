@@ -5,7 +5,7 @@ use 5.006;
 use warnings;
 use strict;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 our %WHICH;
 

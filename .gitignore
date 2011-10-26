@@ -1,0 +1,14 @@
+t/5*
+t/6*
+t/7*
+t/8*
+t/9*
+inc/
+.*sw?
+META.yml
+.bak
+Best-*/
+Best-*tar.gz
+*.bak
+*.old
+Makefile

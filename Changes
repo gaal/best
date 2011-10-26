@@ -1,5 +1,10 @@
 Revision history for Best
 
+0.14    2011-10-26
+        Drop Build.PL from the distribution; it is no longer supported
+        by Module::Install. Thanks to Gregor Herrmann for the report.
+        Document new home for real.
+
 0.13    2011-10-25
         Misc distro cleanups.
           Clarify license is MIT
