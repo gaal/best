@@ -5,7 +5,7 @@ use 5.006;
 use warnings;
 use strict;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 our %WHICH;
 
@@ -15,7 +15,7 @@ use constant DEBUG => ! ! ($ENV{DEBUG_BEST} || $ENV{TRACE_BEST});
 
 =head1 NAME
 
-Best - Fallbackable module loader
+Best - Load modules with fallback
 
 =head1 SYNOPSIS
 
@@ -501,7 +501,7 @@ L<https://github.com/gaal/best>
 
 =head1 COPYRIGHT (The "MIT (X11)" License)
 
-Copyright (C) 2006-2011 Gaal Yahas
+Copyright (C) 2006-2012 Gaal Yahas
 
 This program is distributed under the MIT (X11) License:
 L<http://www.opensource.org/licenses/mit-license.php>
