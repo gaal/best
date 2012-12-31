@@ -65,7 +65,7 @@ successful load and failing only if no alternative was found.
 =head1 FUNCTIONS
 
 Most of the functionality B<Best> provides is on the C<use> line;
-there is only one callable functions as such (see C<which> below)
+there is only one callable method as such (see C<which> below)
 
 If the arguments are either a simple list or a reference to a simple list,
 the elements are taken to be module names and are loaded in order with
@@ -380,14 +380,16 @@ sub import {
     Carp::croak('No viable module found: ' . map { "$_\n" } @errors);
 }
 
-=over 4
-
-=item which
+=head2 which
 
 In some cases--for example, class methods in OO modules--you want to know
 which module B<Best> has successfully loaded. Call C<< Best->which >>
 with the I<first> in your list of module alternatives; the return value
 is a string containing the name of the loaded module.
+
+  use Best qw/YAML::Syck YAML/;
+
+  print "Fallback" if Best->which('YAML::Syck') eq 'YAML';
 
 =back
 
