@@ -5,7 +5,7 @@ use 5.006;
 use warnings;
 use strict;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 our %WHICH;
 
@@ -503,7 +503,7 @@ L<https://github.com/gaal/best>
 
 =head1 COPYRIGHT (The "MIT (X11)" License)
 
-Copyright (C) 2006-2012 Gaal Yahas
+Copyright (C) 2006-2024 Gaal Yahas
 
 This program is distributed under the MIT (X11) License:
 L<http://www.opensource.org/licenses/mit-license.php>
